@@ -8,14 +8,24 @@
     * {
       box-sizing: border-box;
     }
-    details {
+    .pkg-part :not(summary) {
       margin-left: 2rem;
     }
-    pre {
+    .pkg-part:nth-of-type(odd) {
+      background-color: hsla(0,0%,50%,0.2);
+    }
+    .pkg-metadata {
+      margin: .5rem 0;
+    }
+    .pkg-xml {
       max-width: 100%;
       overflow-x: scroll;
       margin: 0;
-      padding: .5rem 0;
+      padding: 0 0 1rem;
+    }
+    img {
+      max-width: -moz-available;
+      max-width: fill-available;
     }
   </style>
   <script type="module" src="./scripts/main.js"></script>
