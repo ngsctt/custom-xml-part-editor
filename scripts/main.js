@@ -1,36 +1,14 @@
 import { unzip, zip } from './fflate-promises.js';
-import { codeToString, detect, convert } from './encoding.js';
+import { detect, convert } from './encoding.js';
 import { xml as prettifyXML } from './vkbeautify.js';
-// import { parse } from './xml.js';
-import * as _xml from './x.js';
-
-const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const MIME_XML = 'text/xml';
-const NS_PKG = 'http://schemas.microsoft.com/office/2006/xmlPackage'
+import { MIME_XML, NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES, NS_PKG, isImg } from './utils.js';
+import { parseXML, serialiseXML, newXML } from './utils.js';
+import { XMap } from './utils.js';
+import { getExtension, isXML } from './utils.js';
 
 const upload = document.getElementById('upload');
 const output = document.getElementById('output');
-const parser = new DOMParser();
 
-class Dir {
-  name;
-  children = {};
-
-  constructor (name) {
-    this.name = name;
-    return this;
-  }
-}
-
-class XMap extends Map {
-  constructor (...args) { super(...args); }
-  add (key, value) {
-    if (this.has(key)) throw new Error(`Key '${key}' already set — aborting`);
-    this.set(key, value);
-  }
-}
-
-const getExtension = path => path.match(/.+[.]([^.]+)$/)[1].toLowerCase() 
 
 upload.addEventListener('change', async event => {
   while (output.firstChild) output.lastChild.remove();
@@ -41,7 +19,6 @@ upload.addEventListener('change', async event => {
   const contentTypeExtensions = new XMap();
 
   async function loadContentTypes (uint8array) {
-    const NS_CONTENT_TYPES = 'http://schemas.openxmlformats.org/package/2006/content-types';
 
     function resultsToEntries (results, attr, replacer, map) {
       let node = results.iterateNext();
@@ -52,7 +29,7 @@ upload.addEventListener('change', async event => {
     }
     
     const text = await new Blob([uint8array]).text();
-    const xml = parser.parseFromString(text, 'application/xml');
+    const xml = parseXML(text);
     const defaults = xml.evaluate('/_:Types/_:Default', xml.documentElement, () => NS_CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
     const overrides = xml.evaluate('/_:Types/_:Override', xml.documentElement, () => NS_CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
     resultsToEntries(defaults, 'Extension', x => x.toLowerCase(), contentTypeExtensions);
@@ -62,11 +39,10 @@ upload.addEventListener('change', async event => {
   if (file.type === MIME_DOCX) {
     const data = new Uint8Array(await file.arrayBuffer());
     const unzipped = await unzip(data);
-    if (unzipped['[Content_Types].xml']) {
-      loadContentTypes(unzipped['[Content_Types].xml']);
-      delete unzipped['[Content_Types].xml'];
+    if (unzipped[PATH_CONTENT_TYPES]) {
+      await loadContentTypes(unzipped[PATH_CONTENT_TYPES]);
+      delete unzipped[PATH_CONTENT_TYPES];
     }
-    console.log(unzipped);
     for (const [rawPath, content] of Object.entries(unzipped)) {
       const path = rawPath.replace(/^\/?/, '/');
       const extension = getExtension(path);
@@ -74,8 +50,9 @@ upload.addEventListener('change', async event => {
       if (contentTypePaths.has(path)) data.contentType = contentTypePaths.get(path);
       else if (contentTypeExtensions.has(extension)) data.contentType = contentTypeExtensions.get(extension);
       partPaths.set(path, data);
+    // console.log(unzipped);
     }
-  } else if (file.type === MIME_XML) {
+  } else if (MIME_XML.includes(file.type)) {
     // const xml = parse(await file.text());
     // const parser = new DOMParser();
     // const xml = parser.parseFromString(await file.text(), "application/xml");
