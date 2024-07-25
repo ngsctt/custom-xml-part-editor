@@ -1,7 +1,7 @@
 import { unzip, zip } from './fflate-promises.js';
 import { detect, convert } from './encoding.js';
 import { xml as prettifyXML } from './vkbeautify.js';
-import { MIME_XML, NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES, NS_PKG, isImg } from './utils.js';
+import { MIMETYPES_XML, NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES, NS_PKG, isImg, MIME_XML } from './utils.js';
 import { parseXML, serialiseXML, newXML } from './utils.js';
 import { XMap } from './utils.js';
 import { getExtension, isXML } from './utils.js';
@@ -64,7 +64,7 @@ upload.addEventListener('change', async event => {
       } else content = bytes;
       parts.set(npath, { contentType, content, xml, enc });
     }
-  } else if (MIME_XML.includes(file.type)) {
+  } else if (MIMETYPES_XML.includes(file.type)) {
     const xml = parseXML(await file.text());
     const enc = 'UTF-8';
     const pkgParts = xml.getElementsByTagNameNS(NS_PKG, 'part');
@@ -74,15 +74,17 @@ upload.addEventListener('change', async event => {
       const contentType = part.getAttributeNS(NS_PKG, 'contentType');
       // console.log({ name, contentType, part });
       let content, xml = false;
-      if (isXML(contentType)) {
+      if (part.firstChild.localName === 'xmlData') {
         xml = true;
         content = document.implementation.createDocument('', '', null);
         const declaration = content.createProcessingInstruction('xml', `version="1.0" encoding="${enc}" standalone="yes"`);
         content.append(declaration);
         for (const child of part.firstElementChild.children) content.append(content.importNode(child, true));
-      } else content = part.textContent;
+      } else if (part.firstChild.localName === 'binaryData') {
+        content = base64ToBinary(part.firstElementChild.textContent);
+        xml = false;
+      }
       parts.set(name, { contentType, content, xml, enc });
-      console.log(serialiseXML(content));
     }
   }
 
@@ -107,7 +109,7 @@ upload.addEventListener('change', async event => {
       const img = new Image()
       img.src = URL.createObjectURL(new Blob([content], { type: contentType }));
       details.append(img);
-    } else details.append(content.toString());
+    } else if (content) details.append(content.toString());
     output.append(details);
   }
 
@@ -133,7 +135,7 @@ async function createZipPackage (parts) {
   const encoder = new TextEncoder();
 
   for (const path of [...parts.keys()].sort()) {
-    const { contentType, content, xml, enc } = parts.get(path);
+    const { contentType, content } = parts.get(path);
     const npath = path.replace(/^[/]?/, '');
     const extn = getExtension(path);
     contentTypePaths.add(path, contentType);
@@ -196,11 +198,42 @@ async function createZipPackage (parts) {
   a.href = href;
   a.download = zipfile.name;
   a.click();
-  const data = new Uint8Array(await zipfile.arrayBuffer());
-  console.log({ data });
-  const unzipped = await unzip(data);
-  console.log({ unzipped });
+  // const data = new Uint8Array(await zipfile.arrayBuffer());
+  // console.log({ data });
+  // const unzipped = await unzip(data);
+  // console.log({ unzipped });
 }
+
+function binaryToBase64 (uint8array) {
+  const output = [];
+
+  // for (let i = 0, length = uint8array.length; i < length; i++) {
+  //   output.push(String.fromCharCode(uint8array[i]));
+  // }
+  for (const code of uint8array) {
+    output.push(String.fromCharCode(code));
+  }
+
+  const base64 = btoa(output.join(''));
+  const segments = [];
+
+  for (let i = 0; i < base64.length; i+= 76) {
+    segments.push(base64.substring(i, i + 76));
+  }
+  console.log({base64, segments});
+  return segments.join('\n');
+};
+
+function base64ToBinary (base64) {
+  const ascii = atob(base64.replace(/[\s\n]+/g, ''));
+  const bytes = [];
+
+  for (let i = 0; i < ascii.length; i++) {
+    bytes.push(ascii.charCodeAt(i));
+  }
+
+  return new Uint8Array(bytes);
+};
 
 function createXmlPackage (parts) {
   const base = parseXML([
@@ -209,21 +242,35 @@ function createXmlPackage (parts) {
     '<pkg:package xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage" />'
   ].join(''));
   for (const path of [...parts.keys()].sort()) {
-    const { contentType, content, xml, enc } = parts.get(path);
+    const { contentType, content } = parts.get(path);
     const part = base.createElementNS(NS_PKG, 'part');
-    if (xml) {
+    part.setAttributeNS(NS_PKG, 'name', path);
+    part.setAttributeNS(NS_PKG, 'contentType', contentType);
+    if (content instanceof XMLDocument) {
       const xmlData = base.createElementNS(NS_PKG, 'xmlData');
       const data = base.importNode(content.documentElement, true);
-      part.setAttributeNS(NS_PKG, 'name', path);
-      part.setAttributeNS(NS_PKG, 'contentType', contentType);
       xmlData.append(data);
       part.append(xmlData);
-    } else part.textContent = content;
+    } else {
+      part.setAttributeNS(NS_PKG, 'compression', 'store');
+      const binaryData = base.createElementNS(NS_PKG, 'binaryData');
+      binaryData.textContent = binaryToBase64(content);
+      // console.log(binaryData);
+      part.append(binaryData);
+    }
     base.documentElement.append(part);
   }
   console.log({ base });
   const output = serialiseXML(base);
   console.log({ output });
+  const file = new File([output], `${fileName}.xml`, { type: MIME_XML });
+  console.log({ file });
+  const a = document.createElement('a');
+  const href = URL.createObjectURL(file);
+  a.href = href;
+  a.download = file.name;
+  a.click();
+
 }
 
 downloadXml.addEventListener('click', event => createXmlPackage(parts));

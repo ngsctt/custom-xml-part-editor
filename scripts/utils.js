@@ -1,5 +1,6 @@
 export const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-export const MIME_XML = ['application/xml', 'text/xml'];
+export const MIMETYPES_XML = ['application/xml', 'text/xml'];
+export const MIME_XML = 'application/xml';
 export const MIME_CUSTOM_XML_PROPS = 'application/vnd.openxmlformats-officedocument.customXmlProperties+xml';
 export const NS_PKG = 'http://schemas.microsoft.com/office/2006/xmlPackage';
 export const NS_CONTENT_TYPES = 'http://schemas.openxmlformats.org/package/2006/content-types';
@@ -10,7 +11,7 @@ export const PATH_CONTENT_TYPES = '[Content_Types].xml';
 export const parseXML = string => new DOMParser().parseFromString(string, 'application/xml');
 export const serialiseXML = node => new XMLSerializer().serializeToString(node);
 export const getExtension = path => path.match(/.+[.]([^.]+)$/)[1].toLowerCase();
-export const isXML = mediaType => MIME_XML.includes(mediaType) || /\+xml$/i.test(mediaType);
+export const isXML = mediaType => MIMETYPES_XML.includes(mediaType) || /\+xml$/i.test(mediaType);
 export const isImg = mediaType => /^image[/]/.test(mediaType);
 
 export function newXML ({ version = '1.0', encoding = 'UTF-8', standalone = false } = {}) {
