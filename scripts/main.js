@@ -1,6 +1,6 @@
-import { unpackOPC } from './unpackOPC.js';
-import { createFlatXmlOPC } from './createFlatXmlOPC.js';
-import { createZipOPC } from './createZipOPC.js';
+import { unpackOPC } from './unpack-opc.js';
+import { createFlatXmlOPC } from './create-flat-xml-package.js';
+import { createZipOPC } from './create-zip-package.js';
 import { displayParts, download } from './interface.js';
 
 const upload = document.getElementById('upload');
