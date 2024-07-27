@@ -1,5 +1,5 @@
 import { unzip } from './fflate-promises.js';
-import { detect, convert } from './encoding.js';
+import { detect, convert } from './external/encoding.js';
 import { MIMETYPES_XML, NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES, NS_PKG } from './constants.js';
 import { parseXML } from './utils.js';
 import { XMap } from './utils.js';

@@ -1,4 +1,4 @@
-import { xml as prettifyXML } from './vkbeautify.js';
+import { xml as prettifyXML } from './external/vkbeautify.js';
 import { isImg } from './utils.js';
 import { serialiseXML } from './utils.js';
 

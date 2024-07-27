@@ -1,4 +1,4 @@
-import { convert, detect } from './encoding';
+import { convert, detect } from './external/encoding';
 import { isXML, parseXML } from './utils';
 
 class BinaryPart {
