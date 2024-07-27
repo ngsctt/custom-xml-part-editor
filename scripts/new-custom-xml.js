@@ -1,4 +1,5 @@
-import { NS_CUSTOM_XML, NS_RELATIONSHIPS, newXML } from './utils';
+import { newXML } from './utils';
+import { NS_CUSTOM_XML, NS_RELATIONSHIPS } from './constants';
 
 function newCustomXMLPart (number = 1, namespace = window.location.href, rootTag = 'CustomProperties') {
   const dsID = self.crypto.randomUUID();
