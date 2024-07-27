@@ -4,11 +4,23 @@ import { createZipOPC } from './createZipOPC.js';
 import { displayParts, download } from './interface.js';
 
 const upload = document.getElementById('upload');
+const expandAll = document.getElementById('expand-all');
+const collapseAll = document.getElementById('collapse-all');
 const output = document.getElementById('output');
 const downloadZip = document.getElementById('download-zip');
 const downloadXml = document.getElementById('download-xml');
 
 let fileName, parts;
+
+expandAll.addEventListener('click', event => {
+  const details = output.querySelectorAll('details.pkg-part');
+  for (const d of details) d.open = true;
+})
+
+collapseAll.addEventListener('click', event => {
+  const details = output.querySelectorAll('details.pkg-part');
+  for (const d of details) d.open = false;
+})
 
 upload.addEventListener('change', async event => {
   while (output.firstChild) output.lastChild.remove();
