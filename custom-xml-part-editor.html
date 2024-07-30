@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom XML Part Editor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    .pkg-part :not(summary) {
+      margin-left: 2rem;
+    }
+    .pkg-part:nth-of-type(odd) {
+      background-color: hsla(0,0%,50%,0.2);
+    }
+    .pkg-metadata {
+      margin: .5rem 0;
+    }
+    .pkg-xml {
+      max-width: 100%;
+      overflow-x: scroll;
+      margin: 0;
+      padding: 0 0 1rem;
+    }
+    img {
+      max-width: -moz-available;
+      max-width: fill-available;
+    }
+  </style>
+  <script type="module" src="./scripts/get-custom-xml-parts.js"></script>
+</head>
+<body>
+  <input type="file" id="upload">
+  <button id="expand-all">Expand all</button>
+  <button id="collapse-all">Collapse all</button>
+  <div id="output"></div>
+  <button id="download-zip">Download (ZIP)</button>
+  <button id="download-xml">Download (XML)</button>
+</body>
+</html>
