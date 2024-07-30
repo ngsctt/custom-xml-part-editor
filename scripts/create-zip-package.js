@@ -27,7 +27,6 @@ const encoder = new TextEncoder();
  * @returns {File} The packaged OPC file
  */
 export async function createZipOPC (parts, filename = 'document.zip') {
-  console.log({filename});
   if (getExtension(filename)?.toLowerCase() === 'xml') replaceExtension(filename, '.zip');
 
   const newParts = {};
@@ -65,10 +64,8 @@ export async function createZipOPC (parts, filename = 'document.zip') {
     node.setAttribute('ContentType', type);
     ctStream.documentElement.append(node);
   }
-  console.log(serialiseXML(ctStream));
   newParts[PATHS.CONTENT_TYPES] = encoder.encode(serialiseXML(ctStream));
 
-  console.log({ ctStream, newParts });
   const zipped = await zip(newParts, { level: 1 });
   return new File([zipped], filename, { type: MIMETYPE.DOCX });
 }
