@@ -1,5 +1,5 @@
-import { convert, detect } from './external/encoding';
 import { isXML, parseXML } from './utils';
+import { convert, detect } from './encoding/encoding.js';
 
 class BinaryPart {
   constructor (type, bytes) {

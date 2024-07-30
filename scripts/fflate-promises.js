@@ -1,4 +1,4 @@
-import { unzip as og_unzip, zip as og_zip } from './external/fflate@v0.8.2.min.js';
+import { unzip as og_unzip, zip as og_zip } from './fflate/fflate@v0.8.2.min.js';
 
 export function unzip(data, opts) {
   return new Promise((resolve, reject) => {
