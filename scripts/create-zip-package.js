@@ -1,8 +1,8 @@
 import { zip } from './fflate-promises.js';
-import { NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES } from './constants.js';
 import { serialiseXML, newXML } from './utils.js';
 import { XMap } from './utils.js';
 import { getExtension } from './utils.js';
+import { MIMETYPE, NS, PATHS } from './constants.js';
 
 const defaultExtensions = new Map([
   ['rels', 'application/vnd.openxmlformats-package.relationships+xml'],
@@ -56,24 +56,24 @@ export async function createZipOPC (parts, filename = 'document.zip') {
   }
 
   const ctStream = newXML({ standalone: true });
-  ctStream.append(ctStream.createElementNS(NS_CONTENT_TYPES, 'Types'));
+  ctStream.append(ctStream.createElementNS(NS.CONTENT_TYPES, 'Types'));
   for (const [extension, type] of contentTypeExtensions) {
-    const node = ctStream.createElementNS(NS_CONTENT_TYPES, 'Default');
+    const node = ctStream.createElementNS(NS.CONTENT_TYPES, 'Default');
     node.setAttribute('Extension', extension);
     node.setAttribute('ContentType', type);
     ctStream.documentElement.append(node);
   }
   for (const [path, type] of contentTypePaths) {
     if (contentTypeExtensions.get(getExtension(path)) === type) continue;
-    const node = ctStream.createElementNS(NS_CONTENT_TYPES, 'Override');
+    const node = ctStream.createElementNS(NS.CONTENT_TYPES, 'Override');
     node.setAttribute('PartName', path);
     node.setAttribute('ContentType', type);
     ctStream.documentElement.append(node);
   }
   console.log(serialiseXML(ctStream));
-  newParts[PATH_CONTENT_TYPES] = encoder.encode(serialiseXML(ctStream));
+  newParts[PATHS.CONTENT_TYPES] = encoder.encode(serialiseXML(ctStream));
 
   console.log({ ctStream, newParts });
   const zipped = await zip(newParts, { level: 1 });
-  return new File([zipped], filename, { type: MIME_DOCX });
+  return new File([zipped], filename, { type: MIMETYPE.DOCX });
 }

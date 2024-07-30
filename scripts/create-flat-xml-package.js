@@ -1,7 +1,7 @@
-import { NS_PKG, MIME_XML } from './constants.js';
 import { replaceExtension, stringBySegment } from './utils.js';
 import { parseXML, serialiseXML } from './utils.js';
 import { binaryToBase64 } from './utils.js';
+import { MIMETYPE, NS } from './constants.js';
 
 /**
  * Creates a 'Flat OPC' Office Open XML file
@@ -20,17 +20,17 @@ export function createFlatXmlOPC (parts, filename = 'document.xml') {
   
   for (const path of [...parts.keys()].sort()) {
     const { contentType, content } = parts.get(path);
-    const part = base.createElementNS(NS_PKG, 'part');
-    part.setAttributeNS(NS_PKG, 'name', path);
-    part.setAttributeNS(NS_PKG, 'contentType', contentType);
+    const part = base.createElementNS(NS.PKG, 'part');
+    part.setAttributeNS(NS.PKG, 'name', path);
+    part.setAttributeNS(NS.PKG, 'contentType', contentType);
     if (content instanceof XMLDocument) {
-      const xmlData = base.createElementNS(NS_PKG, 'xmlData');
+      const xmlData = base.createElementNS(NS.PKG, 'xmlData');
       const data = base.importNode(content.documentElement, true);
       xmlData.append(data);
       part.append(xmlData);
     } else {
-      part.setAttributeNS(NS_PKG, 'compression', 'store');
-      const binaryData = base.createElementNS(NS_PKG, 'binaryData');
+      part.setAttributeNS(NS.PKG, 'compression', 'store');
+      const binaryData = base.createElementNS(NS.PKG, 'binaryData');
       binaryData.textContent = stringBySegment(binaryToBase64(content), 76);
       part.append(binaryData);
     }
@@ -38,6 +38,6 @@ export function createFlatXmlOPC (parts, filename = 'document.xml') {
   }
 
   const output = serialiseXML(base);
-  return new File([output], replaceExtension(filename, '.xml'), { type: MIME_XML });
+  return new File([output], replaceExtension(filename, '.xml'), { type: MIMETYPE.XML });
 }
 

@@ -1,10 +1,10 @@
 import { unzip } from './fflate-promises.js';
 import { detect, convert } from './external/encoding.js';
-import { MIMETYPES_XML, NS_CONTENT_TYPES, MIME_DOCX, PATH_CONTENT_TYPES, NS_PKG } from './constants.js';
 import { parseXML } from './utils.js';
 import { XMap } from './utils.js';
 import { getExtension, isXML } from './utils.js';
 import { base64ToBinary } from './utils.js';
+import { PATHS, NS } from './constants.js';
 
 export async function unpackOPC (file) {
   const parts = new XMap();
@@ -23,8 +23,8 @@ export async function unpackOPC (file) {
 
     const text = await new Blob([uint8array]).text();
     const xml = parseXML(text);
-    const defaults = xml.evaluate('/_:Types/_:Default', xml.documentElement, () => NS_CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
-    const overrides = xml.evaluate('/_:Types/_:Override', xml.documentElement, () => NS_CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+    const defaults = xml.evaluate('/_:Types/_:Default', xml.documentElement, () => NS.CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
+    const overrides = xml.evaluate('/_:Types/_:Override', xml.documentElement, () => NS.CONTENT_TYPES, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, null);
     resultsToEntries(defaults, 'Extension', x => x.toLowerCase(), contentTypeExtensions);
     resultsToEntries(overrides, 'PartName', x => x.replace(/^\//, '/'), contentTypePaths);
   }
@@ -32,9 +32,9 @@ export async function unpackOPC (file) {
   if (file.type === MIME_DOCX) {
     const data = new Uint8Array(await file.arrayBuffer());
     const unzipped = await unzip(data);
-    if (unzipped[PATH_CONTENT_TYPES]) {
-      await loadContentTypes(unzipped[PATH_CONTENT_TYPES]);
-      delete unzipped[PATH_CONTENT_TYPES];
+    if (unzipped[PATHS.CONTENT_TYPES]) {
+      await loadContentTypes(unzipped[PATHS.CONTENT_TYPES]);
+      delete unzipped[PATHS.CONTENT_TYPES];
     }
     for (const [path, bytes] of Object.entries(unzipped)) {
       const npath = path.replace(/^\/?/, '/');
@@ -56,8 +56,6 @@ export async function unpackOPC (file) {
     const pkgParts = xml.getElementsByTagNameNS(NS_PKG, 'part');
 
     for (const part of pkgParts) {
-      const name = part.getAttributeNS(NS_PKG, 'name');
-      const contentType = part.getAttributeNS(NS_PKG, 'contentType');
       // console.log({ name, contentType, part });
       let content, xml = false;
       if (part.firstChild.localName === 'xmlData') {
@@ -71,6 +69,8 @@ export async function unpackOPC (file) {
         xml = false;
       }
       parts.set(name, { contentType, content });
+      const name = part.getAttributeNS(NS.PKG, 'name');
+      const contentType = part.getAttributeNS(NS.PKG, 'contentType');
     }
   }
 
