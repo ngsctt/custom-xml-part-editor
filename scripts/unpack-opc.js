@@ -2,12 +2,18 @@ import { unzip } from './fflate-promises.js';
 import { detect, convert } from './external/encoding.js';
 import { parseXML } from './utils.js';
 import { XMap } from './utils.js';
-import { getExtension, isXML } from './utils.js';
 import { base64ToBinary } from './utils.js';
+import { getExtension, isXML, isOOXMLPackage } from './utils.js';
 import { PATHS, NS } from './constants.js';
+import { XMap, Package } from './classes.js';
 
+
+/**
+ * @param {File} file
+ * @return {Package} 
+ */
 export async function unpackOPC (file) {
-  const parts = new XMap();
+  const pkg = new Package(file.type);
   const contentTypePaths = new XMap();
   const contentTypeExtensions = new XMap();
 
@@ -29,50 +35,38 @@ export async function unpackOPC (file) {
     resultsToEntries(overrides, 'PartName', x => x.replace(/^\//, '/'), contentTypePaths);
   }
 
-  if (file.type === MIME_DOCX) {
+  if (isOOXMLPackage(file.type)) {
     const data = new Uint8Array(await file.arrayBuffer());
     const unzipped = await unzip(data);
+
     if (unzipped[PATHS.CONTENT_TYPES]) {
       await loadContentTypes(unzipped[PATHS.CONTENT_TYPES]);
       delete unzipped[PATHS.CONTENT_TYPES];
     }
+
     for (const [path, bytes] of Object.entries(unzipped)) {
       const npath = path.replace(/^\/?/, '/');
       const extension = getExtension(npath);
-      let contentType, content, enc, xml = false;
+      let contentType;
       if (contentTypePaths.has(npath)) contentType = contentTypePaths.get(npath);
       else if (contentTypeExtensions.has(extension)) contentType = contentTypeExtensions.get(extension);
-      if (isXML(contentType)) {
-        xml = true;
-        enc = detect(bytes);
-        const text = convert(bytes, { to: 'unicode', from: enc, type: 'string' });
-        content = parseXML(text);
-      } else content = bytes;
-      parts.set(npath, { contentType, content });
+      pkg.addPart(npath, contentType, bytes)
     }
-  } else if (MIMETYPES_XML.includes(file.type)) {
+  }
+  
+  else if (isXML(file.type)) {
     const xml = parseXML(await file.text());
-    const enc = xml.characterSet;
-    const pkgParts = xml.getElementsByTagNameNS(NS_PKG, 'part');
+    const pkgParts = xml.getElementsByTagNameNS(NS.PKG, 'part');
 
     for (const part of pkgParts) {
-      // console.log({ name, contentType, part });
-      let content, xml = false;
-      if (part.firstChild.localName === 'xmlData') {
-        xml = true;
-        content = document.implementation.createDocument('', '', null);
-        // const declaration = content.createProcessingInstruction('xml', `version="1.0" encoding="${enc}" standalone="yes"`);
-        // content.append(declaration);
-        for (const child of part.firstElementChild.children) content.append(content.importNode(child, true));
-      } else if (part.firstChild.localName === 'binaryData') {
-        content = base64ToBinary(part.firstElementChild.textContent);
-        xml = false;
-      }
-      parts.set(name, { contentType, content });
       const name = part.getAttributeNS(NS.PKG, 'name');
       const contentType = part.getAttributeNS(NS.PKG, 'contentType');
+      if (part.firstChild.localName === 'xmlData') pkg.addXmlPart(name, contentType, part.firstChild.firstChild);
+      else if (part.firstChild.localName === 'binaryData') pkg.addPart(name, contentType, base64ToBinary(part.firstChild.textContent))
     }
   }
 
-  return parts;
+  else throw new Error(`Content type '${file.type} not valid — aborting`);
+
+  return pkg;
 }

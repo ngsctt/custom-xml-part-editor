@@ -7,7 +7,7 @@ import { MIMETYPE, NS } from './constants.js';
  * Creates a 'Flat OPC' Office Open XML file
  *
  * @export
- * @param {Map} parts The parts to be packed into the OPC XML file
+ * @param {Package} parts The parts to be packed into the OPC XML file
  * @param {string} [filename='document.xml'] The name of the OPC XML file to be created
  * @returns {File} The packaged OPC XML file
  */
@@ -19,21 +19,25 @@ export function createFlatXmlOPC (parts, filename = 'document.xml') {
   ].join(''));
   
   for (const path of [...parts.keys()].sort()) {
-    const { contentType, content } = parts.get(path);
+    const { type, bytes, xml, isXML } = parts.get(path)
     const part = base.createElementNS(NS.PKG, 'part');
     part.setAttributeNS(NS.PKG, 'name', path);
-    part.setAttributeNS(NS.PKG, 'contentType', contentType);
-    if (content instanceof XMLDocument) {
+    part.setAttributeNS(NS.PKG, 'contentType', type);
+
+    if (isXML) {
       const xmlData = base.createElementNS(NS.PKG, 'xmlData');
-      const data = base.importNode(content.documentElement, true);
+      const data = base.importNode(xml.documentElement, true);
       xmlData.append(data);
       part.append(xmlData);
-    } else {
+    }
+    
+    else {
       part.setAttributeNS(NS.PKG, 'compression', 'store');
       const binaryData = base.createElementNS(NS.PKG, 'binaryData');
-      binaryData.textContent = stringBySegment(binaryToBase64(content), 76);
+      binaryData.textContent = stringBySegment(binaryToBase64(bytes), 76);
       part.append(binaryData);
     }
+
     base.documentElement.append(part);
   }
 

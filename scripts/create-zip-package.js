@@ -23,7 +23,7 @@ const encoder = new TextEncoder();
  * Creates a zipped Office Open XML OPC package
  *
  * @export
- * @param {Map} parts The parts to be packed into the OPC file
+ * @param {Package} parts The parts to be packed into the OPC file
  * @param {string} [filename='document.zip'] The name of the OPC file to be created
  * @returns {File} The packaged OPC file
  */
@@ -36,23 +36,19 @@ export async function createZipOPC (parts, filename = 'document.zip') {
   const contentTypeExtensions = new XMap();
 
   for (const path of [...parts.keys()].sort()) {
-    const { contentType, content } = parts.get(path);
+    const { type, bytes, xml, isXML } = parts.get(path)
     const npath = path.replace(/^[/]?/, '');
     const extn = getExtension(path);
-    contentTypePaths.add(path, contentType);
+
+    contentTypePaths.add(path, type);
     if (defaultExtensions.has(extn)) {
-      if (contentType === defaultExtensions.get(extn)) contentTypeExtensions.set(extn, defaultExtensions.get(extn));
+      if (type === defaultExtensions.get(extn)) contentTypeExtensions.set(extn, defaultExtensions.get(extn));
     } else {
-      if (!contentTypeExtensions.has(extn)) contentTypeExtensions.add(extn, contentType);
+      if (!contentTypeExtensions.has(extn)) contentTypeExtensions.add(extn, type);
       else contentTypeExtensions.set(extn, null);
     }
 
-    if (content instanceof XMLDocument) {
-      const serialised = serialiseXML(content);
-      newParts[npath] = encoder.encode(serialised);
-    } else if (typeof content === 'string' || content instanceof String) {
-      newParts[npath] = encoder.encode(content);
-    } else newParts[npath] = content;
+    newParts[npath] = bytes;
   }
 
   const ctStream = newXML({ standalone: true });

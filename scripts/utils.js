@@ -1,9 +1,12 @@
+import { MIMETYPES_OOXML } from './constants.js';
+
 export const parseXML = string => new DOMParser().parseFromString(string, 'application/xml');
 export const serialiseXML = node => new XMLSerializer().serializeToString(node);
 export const getExtension = path => path.match(/.+[.]([^.]+)$/)?.[1]?.toLowerCase() ?? null;
 export const replaceExtension = (path, newExtension) => path.replace(/[.]([^.]+)$/i, newExtension);
 export const isXML = mediaType => /^(?:application|text)[/]xml$/i.test(mediaType.trim()) || /[+]xml$/i.test(mediaType.trim());
 export const isImg = mediaType => /^image[/].+/i.test(mediaType.trim());
+export const isOOXMLPackage = mediaType => MIMETYPES_OOXML.indexOf(mediaType.trim()) >= 0;
 
 export function newXML ({ version = '1.0', encoding = 'UTF-8', standalone = true } = {}) {
   const xml = document.implementation.createDocument('', '', null);
@@ -13,14 +16,6 @@ export function newXML ({ version = '1.0', encoding = 'UTF-8', standalone = true
   // if (standalone != null) instructions.push(`standalone="${standalone ? 'yes' : 'no'}"`);
   // if (instructions.length > 0) xml.append(xml.createProcessingInstruction('xml', instructions.join(' ')));
   return xml;
-}
-
-export class XMap extends Map {
-  constructor (...args) { super(...args); }
-  add (key, value) {
-    if (this.has(key)) throw new Error(`Key '${key}' already set — aborting`);
-    this.set(key, value);
-  }
 }
 
 /**
