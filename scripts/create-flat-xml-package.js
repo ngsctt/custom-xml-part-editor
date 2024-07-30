@@ -1,7 +1,5 @@
-import { replaceExtension, stringBySegment } from './utils.js';
-import { parseXML, serialiseXML } from './utils.js';
-import { binaryToBase64 } from './utils.js';
 import { MIMETYPE, NS } from './constants.js';
+import { replaceExtension, stringBySegment, parseXML, serialiseXML, binaryToBase64 } from './utils.js';
 
 /**
  * Creates a 'Flat OPC' Office Open XML file

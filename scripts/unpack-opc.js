@@ -1,10 +1,6 @@
 import { unzip } from './fflate-promises.js';
-import { detect, convert } from './external/encoding.js';
-import { parseXML } from './utils.js';
-import { XMap } from './utils.js';
-import { base64ToBinary } from './utils.js';
-import { getExtension, isXML, isOOXMLPackage } from './utils.js';
 import { PATHS, NS } from './constants.js';
+import { isOOXMLPackage, parseXML, getExtension, isXML, base64ToBinary } from './utils.js';
 import { XMap, Package } from './classes.js';
 
 

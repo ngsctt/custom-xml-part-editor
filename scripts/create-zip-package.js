@@ -1,8 +1,7 @@
 import { zip } from './fflate-promises.js';
-import { serialiseXML, newXML } from './utils.js';
-import { XMap } from './utils.js';
-import { getExtension } from './utils.js';
 import { MIMETYPE, NS, PATHS } from './constants.js';
+import { serialiseXML, newXML, getExtension } from './utils.js';
+import { XMap } from './classes.js';
 
 const defaultExtensions = new Map([
   ['rels', 'application/vnd.openxmlformats-package.relationships+xml'],

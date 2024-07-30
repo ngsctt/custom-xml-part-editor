@@ -1,6 +1,5 @@
-import { isImg } from './utils.js';
-import { serialiseXML } from './utils.js';
 import { xml as prettifyXML } from './vkbeautify/vkbeautify.js';
+import { isImg, serialiseXML } from './utils.js';
 
 export function download (file) {
   const a = document.createElement('a');
